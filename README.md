@@ -1,7 +1,7 @@
 
 # Prefect Worker Deployment on Amazon ECS Fargate (via AWS CloudFormation)
 
-This project demonstrates the deployment of a [Prefect](https://www.prefect.io/) worker (`dev-worker`) on Amazon ECS using the Fargate launch type, defined entirely through Infrastructure as Code (IaC) with AWS CloudFormation.
+This project demonstrates the deployment of a Prefect worker (`dev-worker`) on Amazon ECS using the Fargate launch type, defined entirely through Infrastructure as Code (IaC) with AWS CloudFormation.
 
 ---
 
@@ -31,17 +31,16 @@ This project demonstrates the deployment of a [Prefect](https://www.prefect.io/)
 ### 1. Prerequisites
 
 - AWS account with permission to create VPC, IAM roles, ECS resources.
-- [AWS CLI configured](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html).
+- AWS CLI configured.
 - Prefect Cloud account with:
   - Account ID
   - Workspace ID
   - API key
-- Docker installed (optional, for local testing).
 
 ### 2. Store Prefect API Key in Secrets Manager
 
 ```bash
-aws secretsmanager create-secret   --name prefect-api-key   --secret-string "<your-prefect-api-key>"
+aws secretsmanager create-secret --name prefect-api-key --secret-string "<your-prefect-api-key>"
 ```
 
 Save the **Secret ARN** for use in the next steps.
@@ -53,7 +52,7 @@ Save the **Secret ARN** for use in the next steps.
 ### 1. Deploy VPC and Networking
 
 ```bash
-aws cloudformation deploy   --template-file vpc.yaml   --stack-name prefect-vpc-stack   --capabilities CAPABILITY_NAMED_IAM
+aws cloudformation deploy --template-file vpc.yaml --stack-name prefect-vpc-stack --capabilities CAPABILITY_NAMED_IAM
 ```
 
 Note down:
@@ -69,12 +68,12 @@ Update `ecs_prefect.yaml` parameters:
 Then deploy:
 
 ```bash
-aws cloudformation deploy   --template-file ecs_prefect.yaml   --stack-name prefect-ecs-stack   --capabilities CAPABILITY_NAMED_IAM
+aws cloudformation deploy --template-file ecs_prefect.yaml --stack-name prefect-ecs-stack --capabilities CAPABILITY_NAMED_IAM
 ```
 
 ---
 
-## 🔍 Verification Steps
+## Verification Steps
 
 ### In AWS Console:
 
@@ -93,7 +92,7 @@ aws cloudformation deploy   --template-file ecs_prefect.yaml   --stack-name pref
 
 ---
 
-## 🧹 Cleanup Instructions
+## Cleanup Instructions
 
 To remove all deployed resources:
 
