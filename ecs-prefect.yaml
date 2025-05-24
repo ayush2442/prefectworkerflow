@@ -1,0 +1,79 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "ECS Fargate with Prefect Worker Setup"
+
+Parameters:
+  VPCId:
+    Type: String
+  SubnetIds:
+    Type: List<String>
+  PrefectAPISecretArn:
+    Type: String
+
+Resources:
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: prefect-cluster
+
+  TaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: prefect-task-execution-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Policies:
+        - PolicyName: AllowSecretsAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !Ref PrefectAPISecretArn
+
+  PrefectTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      RequiresCompatibilities: [FARGATE]
+      Cpu: "512"
+      Memory: "1024"
+      NetworkMode: awsvpc
+      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
+      ContainerDefinitions:
+        - Name: prefect-worker
+          Image: prefecthq/prefect:2-latest
+          Essential: true
+          Environment:
+            - Name: PREFECT_API_URL
+              Value: "https://app.prefect.cloud/account/171c24e0-a438-4ebe-ad4c-faed5f9ffbab/workspace/4eb3b806-4af9-4d37-a08e-36131c5439ba"
+            - Name: PREFECT_WORK_POOL_NAME
+              Value: "ecs-work-pool"
+          Secrets:
+            - Name: PREFECT_API_KEY
+              ValueFrom: !Ref PrefectAPISecretArn
+      Family: prefect-worker
+
+  PrefectService:
+    Type: AWS::ECS::Service
+    DependsOn: ECSCluster
+    Properties:
+      Cluster: !Ref ECSCluster
+      DesiredCount: 1
+      LaunchType: FARGATE
+      TaskDefinition: !Ref PrefectTaskDefinition
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          Subnets: !Ref SubnetIds
+          SecurityGroups: []
+
+Outputs:
+  ECSClusterArn:
+    Value: !Ref ECSCluster
